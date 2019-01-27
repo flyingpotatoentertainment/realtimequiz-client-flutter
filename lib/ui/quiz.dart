@@ -88,21 +88,35 @@ class _QuizContentState extends State<QuizContent> {
       });
     });
   }
-
+  Color getTileColor(int index){
+    if(_selectedAnswer == index) {
+      if(_correctAnswer == -1){
+        return Colors.blue[200];
+      }
+      else if(_correctAnswer == index) {
+        return Colors.green[400];
+      }
+      else{
+        Colors.red[200];
+      }
+    }
+    return Colors.white;
+  }
   Widget answerTile(int index) {
     String text = _data.data['answers'][index];
     return Container(
       color: _correctAnswer == index? Colors.green[200] : Colors.white,
       child: Card(
         margin: EdgeInsets.all(20),
-        color: _selectedAnswer == index? Colors.blue[200] : Colors.white,
+        color: getTileColor(index),
         child: InkWell(
           onTap: (){
+            if(_correctAnswer != -1) return;
             setState(() {
               _selectedAnswer = index;
             });
           },
-          highlightColor: Colors.green[200],
+//          highlightColor: Colors.green[200],
           child: Padding(
               padding: EdgeInsets.all(20),
               child: Center(
