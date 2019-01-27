@@ -89,6 +89,9 @@ class _QuizContentState extends State<QuizContent> {
     });
   }
   Color getTileColor(int index){
+    print("Selected $_selectedAnswer");
+    print("Correct $_correctAnswer");
+    print("Index $index");
     if(_selectedAnswer == index) {
       if(_correctAnswer == -1){
         return Colors.blue[200];
@@ -97,7 +100,7 @@ class _QuizContentState extends State<QuizContent> {
         return Colors.green[400];
       }
       else{
-        Colors.red[200];
+        return Colors.red[200];
       }
     }
     return Colors.white;
