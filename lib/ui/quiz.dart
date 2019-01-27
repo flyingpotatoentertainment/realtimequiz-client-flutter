@@ -59,7 +59,10 @@ class QuizContent extends StatefulWidget {
 
 class _QuizContentState extends State<QuizContent> {
   int _counter = 0;
+  int _selectedAnswer = -1;
+  int _correctAnswer = -1;
   DocumentSnapshot _data;
+
 
   void _incrementCounter() {
     setState(() {
@@ -78,19 +81,34 @@ class _QuizContentState extends State<QuizContent> {
       setState(() {
         print("setting the state");
         _data = data;
+        _correctAnswer = _data.data['correctAnswerIndex'];
+        if(_correctAnswer == -1){
+          _selectedAnswer = -1;
+        }
       });
     });
   }
 
-  Widget answerTile(String text) {
+  Widget answerTile(int index) {
+    String text = _data.data['answers'][index];
     return Container(
+      color: _correctAnswer == index? Colors.green[200] : Colors.white,
       child: Card(
-        child: Padding(
-            padding: EdgeInsets.all(20),
-            child: Center(
-              child: Text(text),
-            )),
         margin: EdgeInsets.all(20),
+        color: _selectedAnswer == index? Colors.blue[200] : Colors.white,
+        child: InkWell(
+          onTap: (){
+            setState(() {
+              _selectedAnswer = index;
+            });
+          },
+          highlightColor: Colors.green[200],
+          child: Padding(
+              padding: EdgeInsets.all(20),
+              child: Center(
+                child: Text(text),
+              )),
+        ),
       ),
     );
   }
@@ -117,10 +135,10 @@ class _QuizContentState extends State<QuizContent> {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: <Widget>[
           questionTile(_data.data['question']),
-          answerTile(_data.data['answers'][0]),
-          answerTile(_data.data['answers'][1]),
-          answerTile(_data.data['answers'][2]),
-          answerTile(_data.data['answers'][3])
+          answerTile(0),
+          answerTile(1),
+          answerTile(2),
+          answerTile(3)
         ],
       );
     }
