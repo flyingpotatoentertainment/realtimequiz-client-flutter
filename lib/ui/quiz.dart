@@ -63,7 +63,6 @@ class _QuizContentState extends State<QuizContent> {
   int _correctAnswer = -1;
   DocumentSnapshot _data;
 
-
   void _incrementCounter() {
     setState(() {
       // This call to setState tells the Flutter framework that something has
@@ -82,39 +81,55 @@ class _QuizContentState extends State<QuizContent> {
         print("setting the state");
         _data = data;
         _correctAnswer = _data.data['correctAnswerIndex'];
-        if(_correctAnswer == -1){
+        if (_correctAnswer == -1) {
           _selectedAnswer = -1;
         }
       });
     });
   }
-  Color getTileColor(int index){
+
+  Color getTileColor(int index) {
     print("Selected $_selectedAnswer");
     print("Correct $_correctAnswer");
     print("Index $index");
-    if(_selectedAnswer == index) {
-      if(_correctAnswer == -1){
+    if (_selectedAnswer == index) {
+      if (_correctAnswer == -1) {
         return Colors.blue[200];
-      }
-      else if(_correctAnswer == index) {
+      } else if (_correctAnswer == index) {
         return Colors.green[400];
-      }
-      else{
+      } else {
         return Colors.red[200];
       }
     }
     return Colors.white;
   }
+
+  Color getChipColor() {
+    switch (_data.data['difficulty']) {
+      case 'easy':
+        return Colors.green[300];
+        break;
+      case 'hard':
+        return Colors.red[300];
+        break;
+      case 'medium':
+        return Colors.orangeAccent[300];
+        break;
+      default:
+        return Colors.green[200];
+    }
+  }
+
   Widget answerTile(int index) {
     String text = _data.data['answers'][index];
     return Container(
-      color: _correctAnswer == index? Colors.green[200] : Colors.white,
+      color: _correctAnswer == index ? Colors.green[200] : Colors.transparent,
       child: Card(
         margin: EdgeInsets.all(20),
         color: getTileColor(index),
         child: InkWell(
-          onTap: (){
-            if(_correctAnswer != -1) return;
+          onTap: () {
+            if (_correctAnswer != -1) return;
             setState(() {
               _selectedAnswer = index;
             });
@@ -136,6 +151,58 @@ class _QuizContentState extends State<QuizContent> {
     );
   }
 
+  Widget evaluationPage() {
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: <Widget>[
+        Row(
+          children: <Widget>[
+            Chip(
+              backgroundColor: getChipColor(),
+              label: Text(_data.data['difficulty']),
+            ),
+            Chip(
+              backgroundColor: Colors.blue[200],
+              label: Text(_data.data['category']),
+            )
+          ],
+        ),
+        questionTile(_data.data['question']),
+        answerTile(_correctAnswer),
+        Padding(
+          padding: const EdgeInsets.only(top: 12.0),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+            children: <Widget>[
+              FlatButton(
+                color: Colors.green[200],
+                onPressed: () {},
+                child: Text("+ Upvote"),
+              ),
+              FlatButton(
+                color: Colors.red[200],
+                onPressed: () {},
+                child: Text("- Downvote"),
+              )
+            ],
+          ),
+        ),
+        Padding(
+          padding: const EdgeInsets.only(top: 12, bottom: 12),
+          child: Center(child: Text("Was there an issue with his question?")),
+        ),
+        Center(
+          child: FlatButton(
+            color: Colors.orange[200],
+            onPressed: () {},
+            child: Text("Bad Content"),
+          ),
+        ),
+      ],
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     if (_data == null) {
@@ -146,6 +213,7 @@ class _QuizContentState extends State<QuizContent> {
 
       } else {
         //display survey, then
+        return evaluationPage();
       }
       return Column(
         mainAxisSize: MainAxisSize.min,
