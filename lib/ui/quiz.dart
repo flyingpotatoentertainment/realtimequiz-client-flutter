@@ -17,7 +17,7 @@ class BookList extends StatelessWidget {
   Widget build(BuildContext context) {
     return StreamBuilder<QuerySnapshot>(
       stream:
-      Firestore.instance.collection('channel_test/en/rounds').snapshots(),
+          Firestore.instance.collection('channel_test/en/rounds').snapshots(),
       builder: (BuildContext context, AsyncSnapshot<QuerySnapshot> snapshot) {
         print("Jimlab");
         print(snapshot.toString());
@@ -28,7 +28,7 @@ class BookList extends StatelessWidget {
           default:
             return new ListView(
               children:
-              snapshot.data.documents.map((DocumentSnapshot document) {
+                  snapshot.data.documents.map((DocumentSnapshot document) {
                 return new ListTile(
                   title: new Text(document['category']),
                   subtitle: new Text(document['difficulty']),
@@ -53,7 +53,6 @@ class QuizContent extends StatefulWidget {
   // used by the build method of the State. Fields in a Widget subclass are
   // always marked "final".
 
-
   @override
   _QuizContentState createState() => _QuizContentState();
 }
@@ -73,26 +72,59 @@ class _QuizContentState extends State<QuizContent> {
     });
   }
 
-  @override
-  Widget build(BuildContext context) {
+  _QuizContentState() {
     Firestore.instance.document('channel_test/en').snapshots().listen((data) {
       print(data.data.toString());
       setState(() {
-        data: data;
+        print("setting the state");
+        _data = data;
       });
     });
+  }
 
-    if(_data == null){
-      return Text("Loading...");
-    }
-    return Scaffold(
-        appBar: AppBar(
-          // Here we take the value from the QuizPage object that was created by
-          // the App.build method, and use it to set our appbar title.
-          title: Text("Realtimequiz"),
-        ),
-        body: BookList()
+  Widget answerTile(String text) {
+    return Container(
+      child: Card(
+        child: Padding(
+            padding: EdgeInsets.all(20),
+            child: Center(
+              child: Text(text),
+            )),
+        margin: EdgeInsets.all(20),
+      ),
     );
+  }
+
+  Widget questionTile(String text) {
+    return Center(
+      child: Padding(padding: EdgeInsets.all(20), child: Text(text)),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (_data == null) {
+      return Center(child: Text("Loading..."));
+    } else {
+      if (_data.data['correctAnswerIndex'] == -1) {
+        // guessing time
+
+      } else {
+        //display survey, then
+      }
+      return Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: <Widget>[
+          questionTile(_data.data['question']),
+          answerTile(_data.data['answers'][0]),
+          answerTile(_data.data['answers'][1]),
+          answerTile(_data.data['answers'][2]),
+          answerTile(_data.data['answers'][3])
+        ],
+      );
+    }
+    return BookList();
   }
 }
 
@@ -109,7 +141,6 @@ class QuizPage extends StatelessWidget {
           // the App.build method, and use it to set our appbar title.
           title: Text("Realtimequiz"),
         ),
-        body: QuizContent()
-    );
+        body: QuizContent());
   }
 }
