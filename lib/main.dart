@@ -48,8 +48,6 @@ class AnimalQuizState extends State<AnimalQuiz>{
           ],
         ),
       ),
-
-
     );
   }
 
