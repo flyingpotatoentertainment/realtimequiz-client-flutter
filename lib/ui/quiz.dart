@@ -1,3 +1,4 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
@@ -53,12 +54,18 @@ class QuizContent extends StatefulWidget {
   // used by the build method of the State. Fields in a Widget subclass are
   // always marked "final".
 
+  // TODO pass channel name in constructor
   @override
   _QuizContentState createState() => _QuizContentState();
 }
 
 class _QuizContentState extends State<QuizContent> {
+
+  final FirebaseAuth _auth = FirebaseAuth.instance;
+  final Firestore _db = Firestore.instance;
+
   int _counter = 0;
+  String channel = "channel_test/en";
   int _selectedAnswer = -1;
   int _correctAnswer = -1;
   DocumentSnapshot _data;
@@ -75,10 +82,11 @@ class _QuizContentState extends State<QuizContent> {
   }
 
   _QuizContentState() {
-    Firestore.instance.document('channel_test/en').snapshots().listen((data) {
+    Firestore.instance.document(channel).snapshots().listen((data) {
       print(data.data.toString());
       setState(() {
         print("setting the state");
+        print(data);
         _data = data;
         _correctAnswer = _data.data['correctAnswerIndex'];
         if (_correctAnswer == -1) {
@@ -89,9 +97,6 @@ class _QuizContentState extends State<QuizContent> {
   }
 
   Color getTileColor(int index) {
-    print("Selected $_selectedAnswer");
-    print("Correct $_correctAnswer");
-    print("Index $index");
     if (_selectedAnswer == index) {
       if (_correctAnswer == -1) {
         return Colors.blue[200];
@@ -113,7 +118,7 @@ class _QuizContentState extends State<QuizContent> {
         return Colors.red[300];
         break;
       case 'medium':
-        return Colors.orangeAccent[300];
+        return Colors.orange[300];
         break;
       default:
         return Colors.green[200];
@@ -128,11 +133,13 @@ class _QuizContentState extends State<QuizContent> {
         margin: EdgeInsets.all(20),
         color: getTileColor(index),
         child: InkWell(
-          onTap: () {
+          onTap: () async {
             if (_correctAnswer != -1) return;
             setState(() {
               _selectedAnswer = index;
             });
+            FirebaseUser user = await _auth.currentUser();
+            Firestore.instance.document(channel).collection("guesses").document(user.uid).setData({"index": _selectedAnswer});
           },
 //          highlightColor: Colors.green[200],
           child: Padding(
@@ -147,7 +154,27 @@ class _QuizContentState extends State<QuizContent> {
 
   Widget questionTile(String text) {
     return Center(
-      child: Padding(padding: EdgeInsets.all(20), child: Text(text)),
+      child: Padding(padding: EdgeInsets.all(12), child: Text(text)),
+    );
+  }
+  Widget chips(){
+    return Row(
+      children: <Widget>[
+        Padding(
+          padding: const EdgeInsets.all(8.0),
+          child: Chip(
+            backgroundColor: getChipColor(),
+            label: Text(_data.data['difficulty']),
+          ),
+        ),
+        Padding(
+          padding: const EdgeInsets.all(8.0),
+          child: Chip(
+            backgroundColor: Colors.blue[200],
+            label: Text(_data.data['category']),
+          ),
+        )
+      ],
     );
   }
 
@@ -156,18 +183,7 @@ class _QuizContentState extends State<QuizContent> {
       mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: <Widget>[
-        Row(
-          children: <Widget>[
-            Chip(
-              backgroundColor: getChipColor(),
-              label: Text(_data.data['difficulty']),
-            ),
-            Chip(
-              backgroundColor: Colors.blue[200],
-              label: Text(_data.data['category']),
-            )
-          ],
-        ),
+        chips(),
         questionTile(_data.data['question']),
         answerTile(_correctAnswer),
         Padding(
@@ -177,12 +193,23 @@ class _QuizContentState extends State<QuizContent> {
             children: <Widget>[
               FlatButton(
                 color: Colors.green[200],
-                onPressed: () {},
+                onPressed: () async {
+                  FirebaseUser user = await _auth.currentUser();
+                  Firestore.instance.document(channel).collection("upvotes").document(user.uid).setData({"upvoted":true});
+//                  Firestore.instance.document(channel).updateData({"upvotes": 1}).whenComplete(() {
+//                    print("Success");
+//                  }).catchError(() {
+//                    print("Failure");
+//                  });
+                },
                 child: Text("+ Upvote"),
               ),
               FlatButton(
                 color: Colors.red[200],
-                onPressed: () {},
+                onPressed: () async {
+                  FirebaseUser user = await _auth.currentUser();
+                  Firestore.instance.document(channel).collection("downvotes").document(user.uid).setData({"upvoted":true});
+                },
                 child: Text("- Downvote"),
               )
             ],
@@ -219,6 +246,7 @@ class _QuizContentState extends State<QuizContent> {
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: <Widget>[
+          chips(),
           questionTile(_data.data['question']),
           answerTile(0),
           answerTile(1),

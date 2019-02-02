@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:realtimequiz/ui/quiz.dart';
-import './ui/animal_quiz.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
 void main(){
   runApp(
@@ -10,9 +10,20 @@ void main(){
   );
 }
 
+// signup
+final FirebaseAuth _auth = FirebaseAuth.instance;
+Future<FirebaseUser> _handleSignIn() async {
+  FirebaseUser user = await _auth.signInAnonymously();
+  print("signed in " + user.displayName);
+  return user;
+}
+
 class AnimalQuiz extends StatefulWidget{
   @override
   State<StatefulWidget> createState() {
+    _handleSignIn()
+        .then((FirebaseUser user) => print(user))
+        .catchError((e) => print(e));
     return new AnimalQuizState();
   }
 }
