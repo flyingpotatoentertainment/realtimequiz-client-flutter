@@ -18,7 +18,7 @@ class BookList extends StatelessWidget {
   Widget build(BuildContext context) {
     return StreamBuilder<QuerySnapshot>(
       stream:
-          Firestore.instance.collection('channel_test/en/rounds').snapshots(),
+      Firestore.instance.collection('channel_test/en/rounds').snapshots(),
       builder: (BuildContext context, AsyncSnapshot<QuerySnapshot> snapshot) {
         print("Jimlab");
         print(snapshot.toString());
@@ -29,7 +29,7 @@ class BookList extends StatelessWidget {
           default:
             return new ListView(
               children:
-                  snapshot.data.documents.map((DocumentSnapshot document) {
+              snapshot.data.documents.map((DocumentSnapshot document) {
                 return new ListTile(
                   title: new Text(document['category']),
                   subtitle: new Text(document['difficulty']),
@@ -68,18 +68,8 @@ class _QuizContentState extends State<QuizContent> {
   String channel = "channel_test/en";
   int _selectedAnswer = -1;
   int _correctAnswer = -1;
+  bool _showEvaluation = true;
   DocumentSnapshot _data;
-
-  void _incrementCounter() {
-    setState(() {
-      // This call to setState tells the Flutter framework that something has
-      // changed in this State, which causes it to rerun the build method below
-      // so that the display can reflect the updated values. If we changed
-      // _counter without calling setState(), then the build method would not be
-      // called again, and so nothing would appear to happen.
-      _counter++;
-    });
-  }
 
   _QuizContentState() {
     Firestore.instance.document(channel).snapshots().listen((data) {
@@ -88,6 +78,7 @@ class _QuizContentState extends State<QuizContent> {
         print("setting the state");
         print(data);
         _data = data;
+        _showEvaluation = true;
         _correctAnswer = _data.data['correctAnswerIndex'];
         if (_correctAnswer == -1) {
           _selectedAnswer = -1;
@@ -97,11 +88,12 @@ class _QuizContentState extends State<QuizContent> {
   }
 
   Color getTileColor(int index) {
+    if (_correctAnswer == index){
+      return Colors.green[300];
+    }
     if (_selectedAnswer == index) {
       if (_correctAnswer == -1) {
         return Colors.blue[200];
-      } else if (_correctAnswer == index) {
-        return Colors.green[400];
       } else {
         return Colors.red[200];
       }
@@ -128,25 +120,38 @@ class _QuizContentState extends State<QuizContent> {
   Widget answerTile(int index) {
     String text = _data.data['answers'][index];
     return Container(
-      color: _correctAnswer == index ? Colors.green[200] : Colors.transparent,
+      //color: _correctAnswer == index ? Colors.green[200] : Colors.transparent,
       child: Card(
-        margin: EdgeInsets.all(20),
+        margin: EdgeInsets.only(left: 20, right: 20, top: 10, bottom: 10),
         color: getTileColor(index),
-        child: InkWell(
-          onTap: () async {
-            if (_correctAnswer != -1) return;
-            setState(() {
-              _selectedAnswer = index;
-            });
-            FirebaseUser user = await _auth.currentUser();
-            Firestore.instance.document(channel).collection("guesses").document(user.uid).setData({"index": _selectedAnswer});
-          },
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.end,
+          children: <Widget>[
+            InkWell(
+              onTap: () async {
+                if (_correctAnswer != -1) return;
+                setState(() {
+                  _selectedAnswer = index;
+                });
+                FirebaseUser user = await _auth.currentUser();
+                Firestore.instance.document(channel)
+                    .collection("guesses")
+                    .document(user.uid)
+                    .setData({"index": _selectedAnswer});
+              },
 //          highlightColor: Colors.green[200],
-          child: Padding(
-              padding: EdgeInsets.all(20),
-              child: Center(
-                child: Text(text),
-              )),
+              child: Padding(
+                  padding: EdgeInsets.all(20),
+                  child: Center(
+                    child: Text(text),
+                  )),
+            ),
+            Padding(
+              padding: const EdgeInsets.only(bottom: 8.0, right: 8.0),
+              child: Text(
+                  _data.data["results"] != null ? _data.data["results"]["guesses"][index.toString()].toString() : "", textAlign: TextAlign.right) ,
+            )
+          ],
         ),
       ),
     );
@@ -157,7 +162,8 @@ class _QuizContentState extends State<QuizContent> {
       child: Padding(padding: EdgeInsets.all(12), child: Text(text)),
     );
   }
-  Widget chips(){
+
+  Widget chips() {
     return Row(
       children: <Widget>[
         Padding(
@@ -195,12 +201,13 @@ class _QuizContentState extends State<QuizContent> {
                 color: Colors.green[200],
                 onPressed: () async {
                   FirebaseUser user = await _auth.currentUser();
-                  Firestore.instance.document(channel).collection("upvotes").document(user.uid).setData({"upvoted":true});
-//                  Firestore.instance.document(channel).updateData({"upvotes": 1}).whenComplete(() {
-//                    print("Success");
-//                  }).catchError(() {
-//                    print("Failure");
-//                  });
+                  Firestore.instance.document(channel)
+                      .collection("upvotes")
+                      .document(user.uid)
+                      .setData({"upvoted": true});
+                  setState(() {
+                    _showEvaluation = false;
+                  });
                 },
                 child: Text("+ Upvote"),
               ),
@@ -208,7 +215,13 @@ class _QuizContentState extends State<QuizContent> {
                 color: Colors.red[200],
                 onPressed: () async {
                   FirebaseUser user = await _auth.currentUser();
-                  Firestore.instance.document(channel).collection("downvotes").document(user.uid).setData({"upvoted":true});
+                  Firestore.instance.document(channel)
+                      .collection("downvotes")
+                      .document(user.uid)
+                      .setData({"upvoted": true});
+                  setState(() {
+                    _showEvaluation = false;
+                  });
                 },
                 child: Text("- Downvote"),
               )
@@ -222,7 +235,16 @@ class _QuizContentState extends State<QuizContent> {
         Center(
           child: FlatButton(
             color: Colors.orange[200],
-            onPressed: () {},
+            onPressed: () async {
+              FirebaseUser user = await _auth.currentUser();
+              Firestore.instance.document(channel)
+                  .collection("issues")
+                  .document(user.uid)
+                  .setData({"issue": true});
+              setState(() {
+                _showEvaluation = false;
+              });
+            },
             child: Text("Bad Content"),
           ),
         ),
@@ -237,22 +259,23 @@ class _QuizContentState extends State<QuizContent> {
     } else {
       if (_data.data['correctAnswerIndex'] == -1) {
         // guessing time
-
-      } else {
+      } else if (_showEvaluation) {
         //display survey, then
         return evaluationPage();
       }
-      return Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: <Widget>[
-          chips(),
-          questionTile(_data.data['question']),
-          answerTile(0),
-          answerTile(1),
-          answerTile(2),
-          answerTile(3)
-        ],
+      return SingleChildScrollView(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: <Widget>[
+            chips(),
+            questionTile(_data.data['question']),
+            answerTile(0),
+            answerTile(1),
+            answerTile(2),
+            answerTile(3)
+          ],
+        ),
       );
     }
     return BookList();
