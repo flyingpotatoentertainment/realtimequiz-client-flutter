@@ -18,7 +18,7 @@ class BookList extends StatelessWidget {
   Widget build(BuildContext context) {
     return StreamBuilder<QuerySnapshot>(
       stream:
-      Firestore.instance.collection('channel_test/en/rounds').snapshots(),
+          Firestore.instance.collection('channel_test/en/rounds').snapshots(),
       builder: (BuildContext context, AsyncSnapshot<QuerySnapshot> snapshot) {
         print("Jimlab");
         print(snapshot.toString());
@@ -29,7 +29,7 @@ class BookList extends StatelessWidget {
           default:
             return new ListView(
               children:
-              snapshot.data.documents.map((DocumentSnapshot document) {
+                  snapshot.data.documents.map((DocumentSnapshot document) {
                 return new ListTile(
                   title: new Text(document['category']),
                   subtitle: new Text(document['difficulty']),
@@ -60,7 +60,6 @@ class QuizContent extends StatefulWidget {
 }
 
 class _QuizContentState extends State<QuizContent> {
-
   final FirebaseAuth _auth = FirebaseAuth.instance;
   final Firestore _db = Firestore.instance;
 
@@ -88,7 +87,7 @@ class _QuizContentState extends State<QuizContent> {
   }
 
   Color getTileColor(int index) {
-    if (_correctAnswer == index){
+    if (_correctAnswer == index) {
       return Colors.green[300];
     }
     if (_selectedAnswer == index) {
@@ -124,34 +123,38 @@ class _QuizContentState extends State<QuizContent> {
       child: Card(
         margin: EdgeInsets.only(left: 20, right: 20, top: 10, bottom: 10),
         color: getTileColor(index),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.end,
-          children: <Widget>[
-            InkWell(
-              onTap: () async {
-                if (_correctAnswer != -1) return;
-                setState(() {
-                  _selectedAnswer = index;
-                });
-                FirebaseUser user = await _auth.currentUser();
-                Firestore.instance.document(channel)
-                    .collection("guesses")
-                    .document(user.uid)
-                    .setData({"index": _selectedAnswer});
-              },
+        child: InkWell(
+          onTap: () async {
+            if (_correctAnswer != -1) return;
+            setState(() {
+              _selectedAnswer = index;
+            });
+            FirebaseUser user = await _auth.currentUser();
+            Firestore.instance
+                .document(channel)
+                .collection("guesses")
+                .document(user.uid)
+                .setData({"index": _selectedAnswer});
+          },
 //          highlightColor: Colors.green[200],
-              child: Padding(
+          child: Column(
+            children: <Widget>[
+              Padding(
                   padding: EdgeInsets.all(20),
                   child: Center(
                     child: Text(text),
                   )),
-            ),
-            Padding(
-              padding: const EdgeInsets.only(bottom: 8.0, right: 8.0),
-              child: Text(
-                  _data.data["results"] != null ? _data.data["results"]["guesses"][index.toString()].toString() : "", textAlign: TextAlign.right) ,
-            )
-          ],
+              Padding(
+                padding: const EdgeInsets.only(bottom: 8.0, right: 8.0),
+                child: Text(
+                    _data.data["results"] != null
+                        ? _data.data["results"]["guesses"][index.toString()]
+                            .toString()
+                        : "",
+                    textAlign: TextAlign.right),
+              )
+            ],
+          ),
         ),
       ),
     );
@@ -201,7 +204,8 @@ class _QuizContentState extends State<QuizContent> {
                 color: Colors.green[200],
                 onPressed: () async {
                   FirebaseUser user = await _auth.currentUser();
-                  Firestore.instance.document(channel)
+                  Firestore.instance
+                      .document(channel)
                       .collection("upvotes")
                       .document(user.uid)
                       .setData({"upvoted": true});
@@ -215,7 +219,8 @@ class _QuizContentState extends State<QuizContent> {
                 color: Colors.red[200],
                 onPressed: () async {
                   FirebaseUser user = await _auth.currentUser();
-                  Firestore.instance.document(channel)
+                  Firestore.instance
+                      .document(channel)
                       .collection("downvotes")
                       .document(user.uid)
                       .setData({"upvoted": true});
@@ -237,7 +242,8 @@ class _QuizContentState extends State<QuizContent> {
             color: Colors.orange[200],
             onPressed: () async {
               FirebaseUser user = await _auth.currentUser();
-              Firestore.instance.document(channel)
+              Firestore.instance
+                  .document(channel)
                   .collection("issues")
                   .document(user.uid)
                   .setData({"issue": true});
