@@ -42,8 +42,8 @@ class BookList extends StatelessWidget {
   }
 }
 
-class QuizContent extends StatefulWidget {
-  QuizContent({Key key}) : super(key: key);
+class QuizPage extends StatefulWidget {
+  QuizPage({Key key}) : super(key: key);
 
   // This widget is the home page of your application. It is stateful, meaning
   // that it has a State object (defined below) that contains fields that affect
@@ -56,10 +56,14 @@ class QuizContent extends StatefulWidget {
 
   // TODO pass channel name in constructor
   @override
-  _QuizContentState createState() => _QuizContentState();
+  _QuizPageState createState() => _QuizPageState();
 }
 
-class _QuizContentState extends State<QuizContent> {
+class _QuizPageState extends State<QuizPage>
+    with SingleTickerProviderStateMixin {
+  Animation<double> animation;
+  AnimationController controller;
+
   final FirebaseAuth _auth = FirebaseAuth.instance;
   final Firestore _db = Firestore.instance;
 
@@ -70,7 +74,7 @@ class _QuizContentState extends State<QuizContent> {
   bool _showEvaluation = true;
   DocumentSnapshot _data;
 
-  _QuizContentState() {
+  _QuizPageState() {
     Firestore.instance.document(channel).snapshots().listen((data) {
       print(data.data.toString());
       setState(() {
@@ -83,7 +87,36 @@ class _QuizContentState extends State<QuizContent> {
           _selectedAnswer = -1;
         }
       });
+      if (_data.data['correctAnswerIndex'] == -1) {
+        controller.duration = const Duration(seconds: 10);
+      } else {
+        controller.duration = const Duration(seconds: 20);
+      }
+      if (data.data["results"] == null) {
+        controller.reset();
+        controller.forward();
+      }
     });
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    controller =
+        AnimationController(duration: const Duration(seconds: 10), vsync: this);
+//    animation = Tween<double>(begin: 0, end: 300).animate(controller)
+//      ..addListener(() {
+//        setState(() {
+//          // The state that has changed here is the animation object’s value.
+//        });
+//      });
+    controller
+      ..addListener(() {
+        setState(() {
+          // The state that has changed here is the animation object’s value.
+        });
+      });
+    //controller.forward();
   }
 
   Color getTileColor(int index) {
@@ -144,14 +177,19 @@ class _QuizContentState extends State<QuizContent> {
                   child: Center(
                     child: Text(text),
                   )),
-              Padding(
-                padding: const EdgeInsets.only(bottom: 8.0, right: 8.0),
-                child: Text(
-                    _data.data["results"] != null
-                        ? _data.data["results"]["guesses"][index.toString()]
-                            .toString()
-                        : "",
-                    textAlign: TextAlign.right),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.end,
+                children: <Widget>[
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: 8.0, right: 8.0),
+                    child: Text(
+                        _data.data["results"] != null
+                            ? _data.data["results"]["guesses"][index.toString()]
+                                .toString()
+                            : "",
+                        textAlign: TextAlign.right),
+                  ),
+                ],
               )
             ],
           ),
@@ -161,38 +199,56 @@ class _QuizContentState extends State<QuizContent> {
   }
 
   Widget questionTile(String text) {
-    return Center(
-      child: Padding(padding: EdgeInsets.all(12), child: Text(text)),
+    return Card(
+      child: Column(
+        children: <Widget>[
+          Center(
+            child: Padding(padding: EdgeInsets.all(14), child: Text(text)),
+          ),
+          Padding(
+            padding: const EdgeInsets.all(8.0),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.end,
+              children: <Widget>[
+                CircularProgressIndicator(
+                  value: controller.value,
+                  strokeWidth: 8,
+                ),
+              ],
+            ),
+          )
+        ],
+      ),
     );
   }
 
-  Widget chips() {
-    return Row(
-      children: <Widget>[
-        Padding(
-          padding: const EdgeInsets.all(8.0),
-          child: Chip(
-            backgroundColor: getChipColor(),
-            label: Text(_data.data['difficulty']),
-          ),
-        ),
-        Padding(
-          padding: const EdgeInsets.all(8.0),
-          child: Chip(
-            backgroundColor: Colors.blue[200],
-            label: Text(_data.data['category']),
-          ),
-        )
-      ],
-    );
-  }
+//  Widget chips() {
+//    return Row(
+//      children: <Widget>[
+//        Padding(
+//          padding: const EdgeInsets.all(8.0),
+//          child: Chip(
+//            backgroundColor: getChipColor(),
+//            label: Text(_data.data['difficulty']),
+//          ),
+//        ),
+//        Padding(
+//          padding: const EdgeInsets.all(8.0),
+//          child: Chip(
+//            backgroundColor: Colors.blue[200],
+//            label: Text(_data.data['category']),
+//          ),
+//        )
+//      ],
+//    );
+//  }
 
   Widget evaluationPage() {
     return Column(
       mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: <Widget>[
-        chips(),
+//        chips(),
         questionTile(_data.data['question']),
         answerTile(_correctAnswer),
         Padding(
@@ -200,36 +256,36 @@ class _QuizContentState extends State<QuizContent> {
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceEvenly,
             children: <Widget>[
-              FlatButton(
-                color: Colors.green[200],
-                onPressed: () async {
-                  FirebaseUser user = await _auth.currentUser();
-                  Firestore.instance
-                      .document(channel)
-                      .collection("upvotes")
-                      .document(user.uid)
-                      .setData({"upvoted": true});
-                  setState(() {
-                    _showEvaluation = false;
-                  });
-                },
-                child: Text("+ Upvote"),
-              ),
-              FlatButton(
-                color: Colors.red[200],
-                onPressed: () async {
-                  FirebaseUser user = await _auth.currentUser();
-                  Firestore.instance
-                      .document(channel)
-                      .collection("downvotes")
-                      .document(user.uid)
-                      .setData({"upvoted": true});
-                  setState(() {
-                    _showEvaluation = false;
-                  });
-                },
-                child: Text("- Downvote"),
-              )
+              FlatButton.icon(
+                  color: Colors.green[200],
+                  onPressed: () async {
+                    FirebaseUser user = await _auth.currentUser();
+                    Firestore.instance
+                        .document(channel)
+                        .collection("upvotes")
+                        .document(user.uid)
+                        .setData({"upvoted": true});
+                    setState(() {
+                      _showEvaluation = false;
+                    });
+                  },
+                  label: Text("Upvote"),
+                  icon: Icon(Icons.thumb_up)),
+              FlatButton.icon(
+                  color: Colors.red[200],
+                  onPressed: () async {
+                    FirebaseUser user = await _auth.currentUser();
+                    Firestore.instance
+                        .document(channel)
+                        .collection("downvotes")
+                        .document(user.uid)
+                        .setData({"upvoted": true});
+                    setState(() {
+                      _showEvaluation = false;
+                    });
+                  },
+                  label: Text("Downvote"),
+                  icon: Icon(Icons.thumb_down))
             ],
           ),
         ),
@@ -238,28 +294,27 @@ class _QuizContentState extends State<QuizContent> {
           child: Center(child: Text("Was there an issue with his question?")),
         ),
         Center(
-          child: FlatButton(
-            color: Colors.orange[200],
-            onPressed: () async {
-              FirebaseUser user = await _auth.currentUser();
-              Firestore.instance
-                  .document(channel)
-                  .collection("issues")
-                  .document(user.uid)
-                  .setData({"issue": true});
-              setState(() {
-                _showEvaluation = false;
-              });
-            },
-            child: Text("Bad Content"),
-          ),
+          child: FlatButton.icon(
+              color: Colors.orange[200],
+              onPressed: () async {
+                FirebaseUser user = await _auth.currentUser();
+                Firestore.instance
+                    .document(channel)
+                    .collection("issues")
+                    .document(user.uid)
+                    .setData({"issue": true});
+                setState(() {
+                  _showEvaluation = false;
+                });
+              },
+              label: Text("Bad Content"),
+              icon: Icon(Icons.warning)),
         ),
       ],
     );
   }
 
-  @override
-  Widget build(BuildContext context) {
+  Widget content(){
     if (_data == null) {
       return Center(child: Text("Loading..."));
     } else {
@@ -274,7 +329,7 @@ class _QuizContentState extends State<QuizContent> {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: <Widget>[
-            chips(),
+//            chips(),
             questionTile(_data.data['question']),
             answerTile(0),
             answerTile(1),
@@ -284,14 +339,7 @@ class _QuizContentState extends State<QuizContent> {
         ),
       );
     }
-    return BookList();
   }
-}
-
-class QuizPage extends StatelessWidget {
-  final Widget body;
-
-  const QuizPage({Key key, this.body}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
@@ -299,8 +347,26 @@ class QuizPage extends StatelessWidget {
         appBar: AppBar(
           // Here we take the value from the QuizPage object that was created by
           // the App.build method, and use it to set our appbar title.
-          title: Text("Realtimequiz"),
+//          title: Text("Realtimequiz"),
+          bottom: PreferredSize(
+              preferredSize: const Size.fromHeight(22.0),
+              child: Padding(
+                padding: const EdgeInsets.only(bottom: 8.0),
+                child: Column(
+                  children: <Widget>[
+                    Text(_data.data['category'], style: TextStyle(color: Colors.white, fontSize: 20),),
+                    Text(_data.data['difficulty'], style: TextStyle(color: Colors.white),),
+                  ],
+                ),
+              )),
         ),
-        body: QuizContent());
+        body: content()
+    );
+  }
+
+  @override
+  void dispose() {
+    controller.dispose();
+    super.dispose();
   }
 }
