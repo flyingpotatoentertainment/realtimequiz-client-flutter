@@ -1,24 +1,99 @@
 import 'package:flutter/material.dart';
+import 'package:realtimequiz/ui/common/common.dart';
 import 'package:realtimequiz/ui/quiz.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
-void main(){
+void main() {
   runApp(
-      new MaterialApp(
-        home: new AnimalQuiz(),
-      )
+    MyApp(),
   );
 }
 
+final ThemeData _theme = _buildTheme();
+
+ThemeData _buildTheme() {
+  final ThemeData base = ThemeData.light();
+  return base.copyWith(
+    // TODO replace with color palette
+    accentColor: Colors.orange,
+    primaryColor: Colors.blue,
+    buttonTheme: base.buttonTheme.copyWith(
+      buttonColor: Colors.green,
+      textTheme: base.buttonTheme.textTheme,
+      shape: new RoundedRectangleBorder(borderRadius: new BorderRadius.circular(10.0)),
+        height: 100.0
+
+
+  ),
+    textTheme: _buildShrineTextTheme(base.textTheme),
+    primaryTextTheme: _buildShrineTextTheme(base.primaryTextTheme),
+    accentTextTheme: _buildShrineTextTheme(base.accentTextTheme),
+  );
+}
+TextTheme _buildShrineTextTheme(TextTheme base) {
+  return base.copyWith(
+    headline: base.headline.copyWith(
+      fontWeight: FontWeight.w500,
+    ),
+    title: base.title.copyWith(
+        fontSize: 18.0
+    ),
+    caption: base.caption.copyWith(
+      fontWeight: FontWeight.w700,
+      fontSize: 14.0,
+    ),
+  ).apply(
+    fontFamily: 'Mukta',
+  );
+}
+
+
 // signup
-final FirebaseAuth _auth = FirebaseAuth.instance;
+class MyApp extends StatelessWidget {
+  // This widget is the root of your application.
+  @override
+  Widget build(BuildContext context) {
+    return MaterialApp(
+      title: 'Realtime Quiz',
+      theme: _theme,
+      home: HomePage(),
+    );
+  }
+}
+//
+
 Future<FirebaseUser> _handleSignIn() async {
   FirebaseUser user = await _auth.signInAnonymously();
   print("signed in " + user.displayName);
   return user;
 }
 
-class AnimalQuiz extends StatefulWidget{
+final FirebaseAuth _auth = FirebaseAuth.instance;
+
+class HomePage extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return MyScaffold(
+        child: new Container(
+      margin: const EdgeInsets.all(15.0),
+      child: new Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: <Widget>[
+          MyButton(
+            onPress: () {
+              Navigator.push(context,
+                  new MaterialPageRoute(builder: (context) => new QuizPage()));
+            },
+            text: "Starten",
+          )
+        ],
+      ),
+    ));
+  }
+}
+
+class AnimalQuiz extends StatefulWidget {
   @override
   State<StatefulWidget> createState() {
     _handleSignIn()
@@ -28,7 +103,7 @@ class AnimalQuiz extends StatefulWidget{
   }
 }
 
-class AnimalQuizState extends State<AnimalQuiz>{
+class AnimalQuizState extends State<AnimalQuiz> {
   @override
   Widget build(BuildContext context) {
     return new Scaffold(
@@ -36,63 +111,33 @@ class AnimalQuizState extends State<AnimalQuiz>{
         title: new Text("Multiple Choice Quiz"),
         backgroundColor: Colors.blue,
       ),
-
-
       body: new Container(
         margin: const EdgeInsets.all(15.0),
         child: new Column(
-
           crossAxisAlignment: CrossAxisAlignment.stretch,
           mainAxisAlignment: MainAxisAlignment.center,
           children: <Widget>[
-
             new MaterialButton(
                 height: 50.0,
                 color: Colors.green,
                 onPressed: startQuiz,
-                child: new Text("Quiz 1",
-                  style: new TextStyle(
-                      fontSize: 18.0,
-                      color: Colors.white
-                  ),)
-            )
+                child: new Text(
+                  "Quiz 1",
+                  style: new TextStyle(fontSize: 18.0, color: Colors.white),
+                ))
           ],
         ),
       ),
     );
   }
 
-  void startQuiz(){
-    Navigator.push(context, new MaterialPageRoute(builder: (context)=> new QuizPage()));
+  void startQuiz() {
+    Navigator.push(
+        context, new MaterialPageRoute(builder: (context) => new QuizPage()));
   }
 }
 
-
 //void main() => runApp(MyApp());
-//
-//class MyApp extends StatelessWidget {
-//  // This widget is the root of your application.
-//  @override
-//  Widget build(BuildContext context) {
-//    return MaterialApp(
-//      title: 'Flutter Demo',
-//      theme: ThemeData(
-//        // This is the theme of your application.
-//        //
-//        // Try running your application with "flutter run". You'll see the
-//        // application has a blue toolbar. Then, without quitting the app, try
-//        // changing the primarySwatch below to Colors.green and then invoke
-//        // "hot reload" (press "r" in the console where you ran "flutter run",
-//        // or simply save your changes to "hot reload" in a Flutter IDE).
-//        // Notice that the counter didn't reset back to zero; the application
-//        // is not restarted.
-//        primarySwatch: Colors.blue,
-//      ),
-//      home: MyHomePage(title: 'Flutter Demo Home Page'),
-//    );
-//  }
-//}
-//
 //class MyHomePage extends StatefulWidget {
 //  MyHomePage({Key key, this.title}) : super(key: key);
 //

@@ -1,6 +1,7 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:realtimequiz/ui/common/common.dart';
 
 class QuizAnswers extends StatelessWidget {
   @override
@@ -88,9 +89,9 @@ class _QuizPageState extends State<QuizPage>
         }
       });
       if (_data.data['correctAnswerIndex'] == -1) {
-        controller.duration = const Duration(seconds: 10);
+        controller.duration = const Duration(seconds: 15);
       } else {
-        controller.duration = const Duration(seconds: 20);
+        controller.duration = const Duration(seconds: 25);
       }
       if (data.data["results"] == null) {
         controller.reset();
@@ -314,7 +315,7 @@ class _QuizPageState extends State<QuizPage>
     );
   }
 
-  Widget content(){
+  Widget content() {
     if (_data == null) {
       return Center(child: Text("Loading..."));
     } else {
@@ -324,44 +325,54 @@ class _QuizPageState extends State<QuizPage>
         //display survey, then
         return evaluationPage();
       }
-      return SingleChildScrollView(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: <Widget>[
+      return Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: <Widget>[
 //            chips(),
-            questionTile(_data.data['question']),
-            answerTile(0),
-            answerTile(1),
-            answerTile(2),
-            answerTile(3)
-          ],
-        ),
+          questionTile(_data.data['question']), answerTile(0),
+          answerTile(1),
+          answerTile(2),
+          answerTile(3)
+        ],
       );
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-        appBar: AppBar(
-          // Here we take the value from the QuizPage object that was created by
-          // the App.build method, and use it to set our appbar title.
-//          title: Text("Realtimequiz"),
-          bottom: PreferredSize(
-              preferredSize: const Size.fromHeight(22.0),
-              child: Padding(
-                padding: const EdgeInsets.only(bottom: 8.0),
-                child: Column(
-                  children: <Widget>[
-                    Text(_data.data['category'], style: TextStyle(color: Colors.white, fontSize: 20),),
-                    Text(_data.data['difficulty'], style: TextStyle(color: Colors.white),),
-                  ],
+    return MyScaffold(
+        child: SafeArea(
+          child: SingleChildScrollView(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: <Widget>[
+                Container(
+                  child: Padding(
+                    padding: const EdgeInsets.only(bottom: 8.0),
+                    child: Column(
+                      children: <Widget>[
+                        Padding(
+                          padding: const EdgeInsets.all(8.0),
+                          child: Text(
+                            _data.data['category'],
+                            //style: TextStyle(color: Colors.white, fontSize: 20),
+                            style: Theme.of(context).textTheme.headline,
+                          ),
+                        ),
+                        Text(
+                          _data.data['difficulty'],
+                          style: Theme.of(context).textTheme.caption,
+                        ),
+                      ],
+                    ),
+                  ),
                 ),
-              )),
-        ),
-        body: content()
-    );
+                content(),
+              ],
+            ),
+          ),
+        ));
   }
 
   @override
